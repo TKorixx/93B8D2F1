@@ -1,111 +1,95 @@
-// 93B8D2F1/server.js
 const express = require("express");
 const cors = require("cors");
-const multer = require("multer"); 
-const path = require("path");      
-const fs = require('fs'); 
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 
-app.use(cors());          
-app.use(express.json());  
+app.use(cors());
+app.use(express.json());
 
-// --- KÉPFELTÖLTÉS ÉS STATIKUS FÁJLOK KONFIGURÁCIÓJA ---
+// --- Public/assets mappa kiszolgálása ---
+const assetsPath = path.join(__dirname,"assets");
+app.use("/assets", express.static(assetsPath));
 
-// Ha a mappák a 'C:\Users\Kori\Desktop' alatt vannak:
-// Két szintet lépünk fel (Desktop), majd belépünk a másik mappába.
-const desktopPath = path.join(__dirname, '..', '..');
-const frontendPublicPath = path.join(desktopPath, '1C7A5B3E', 'public');
-// Ezt az útvonalat kézzel is ellenőrizheti: C:\Users\Kori\Desktop\1C7A5B3E\public
+if (!fs.existsSync(assetsPath)) fs.mkdirSync(assetsPath, { recursive: true });
+app.use("/assets", express.static(assetsPath));
 
-app.use(express.static(frontendPublicPath)); 
-
-// A feltöltés célmappája
-const uploadDir = path.join(frontendPublicPath, 'assets');
-
-// Mappa ellenőrzése és létrehozása
-if (!fs.existsSync(uploadDir)) {
-    console.log(`Létrehozzuk a mappát: ${uploadDir}`);
-    fs.mkdirSync(uploadDir, { recursive: true });
-} else {
-    console.log(`Feltöltési mappa útvonala: ${uploadDir}`);
-}
-
+// --- Multer feltöltés konfiguráció ---
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir); 
-  },
-  filename: (req, file, cb) => {
-    const artistName = req.body.name.toLowerCase().replace(/\s+/g, '-');
-    const extension = path.extname(file.originalname); 
-    const newFileName = `${artistName}-${Date.now()}${extension}`;
-    cb(null, newFileName); 
-  }
+  destination: (req, file, cb) => cb(null, assetsPath),
+  filename: (req, file, cb) => {
+    const safeName = req.body.name.toLowerCase().replace(/\s+/g, "-");
+    const ext = path.extname(file.originalname);
+    cb(null, `${safeName}-${Date.now()}${ext}`);
+  },
 });
+const upload = multer({ storage });
 
-const upload = multer({ storage: storage });
-
-// --- MINTAADATOK ---
-
+// --- Mintaadatok ---
 let artists = [
-  { id: 1, name: "Azahriah", genre: "Pop / Alternative", imageFile: "azahriah.jpg" },
-  { id: 2, name: "Desh", genre: "HipHop / RnB", imageFile: "desh.jpg" },
-  { id: 3, name: "T. Danny", genre: "Pop / Rap", imageFile: "tdanny.jpg" },
-  { id: 4, name: "Bruno x Spacc", genre: "Trap / Party", imageFile: "brunoxspacc.jpg" },
+  { 
+    id: 1, 
+    name: "Azahriah", 
+    genre: "Pop / Alternative", 
+    imageFile: "azahriah.jpg", 
+    info: "Azahriah a magyar pop és alternatív zenei színtér egyik legismertebb fiatal előadója. Karizmatikus stílusa és kreatív dalszövegei miatt rengeteg rajongóval rendelkezik. Számos koncerttel és lemezzel örvendezteti meg a közönséget.",
+    musicinfo: "„Rampapapam” Azahriah egyik legismertebb és legmeghatározóbb dala, amely a modern magyar popzene határait feszegeti. A dalban keveredik a pop, az alternatív és az elektronikus hangzás, miközben a refrén azonnal fülbemászóvá teszi. A „Rampapapam” szövege az önazonosságról, szabadságról és a fiatalos lendületről szól — tökéletesen tükrözve Azahriah generációs üzenetét. A klip vizuálisan is kiemelkedő, hiszen látványos képi világa tökéletesen kiegészíti a dal energikus, mégis érzelmes hangulatát.",
+    youtube: "https://www.youtube.com/embed/SHTqyvPB78E?list=RDSHTqyvPB78E&start_radio=1"
+  },
+  { 
+    id: 2, 
+    name: "Desh", 
+    genre: "HipHop / RnB", 
+    imageFile: "desh.jpg", 
+    info: "Desh a magyar hiphop világ feltörekvő csillaga. Egyedi flow-ja és lírai stílusa miatt különleges helyet foglal el a zenei palettán. Számos együttműködés és fesztivál fellépés jellemzi pályafutását.",
+    musicinfo: "„Mokka” Desh egyik legnépszerűbb dala, amely a könnyed, mégis stílusos RnB és trap elemeket ötvözi. A szám egy laza, magabiztos életérzést közvetít, miközben a szövegben visszaköszön Desh jellegzetes humoros és önironikus stílusa. A „Mokka” refrénje rendkívül fülbemászó, emiatt a klubokban és a TikTokon is gyorsan virálissá vált. A dal videóklipje látványos, modern vizuális világot mutat, ami tovább erősíti Desh egyedi előadói karakterét.",
+    youtube: "https://www.youtube.com/embed/RT00oAdUmYc?list=RDRT00oAdUmYc&start_radio=1"
+  },
+  { 
+    id: 3, 
+    name: "T. Danny", 
+    genre: "Pop / Rap", 
+    imageFile: "tdanny.jpg", 
+    info: "T. Danny egy sokoldalú előadó, aki a pop és rap elemeit ötvözi zenéjében. Lemezei és videoklipjei nagy sikert arattak a fiatal közönség körében. Előadásai mindig energikusak és interaktívak.",
+    musicinfo: "„Pletyka” T. Danny egyik legismertebb slágere, amelyben a fiatal előadó a hírnév árnyoldalait és a róla keringő szóbeszédeket dolgozza fel. A dal egyaránt hordoz popos dallamokat és modern rap-elemeket, miközben őszintén reflektál a közösségi média világára és a személyes támadásokra. A fülbemászó refrén és az őszinte szöveg miatt sokan tudnak vele azonosulni, ezért gyorsan a toplisták élére került. A klip vizuálisan is erős, modern, városi hangulatot áraszt, tökéletesen kiegészítve T. Danny karakterét.",
+    youtube: "https://www.youtube.com/embed/B8wL1GIDcm4?list=RDB8wL1GIDcm4"
+  },
+  { 
+    id: 4, 
+    name: "Bruno x Spacc", 
+    genre: "Trap / Party", 
+    imageFile: "brunoxspacc.jpg", 
+    info: "Bruno x Spacc a trap és party zenei stílus egyik kiemelkedő képviselője Magyarországon. Dinamikus dalai garantáltan felpörgetik a hangulatot. Rajongói különösen szeretik a bulis, energikus előadásait." ,
+    musicinfo: "„MOLLYWOOD (Afterparty)” Bruno x Spacc egyik legikonikusabb bulislágere, amely tökéletesen visszaadja a fiatalos életérzést és az éjszakai partik felszabadult hangulatát. A dal lendületes ütemei és fülbemászó refrénje miatt gyorsan közönségkedvenc lett a magyar trap és pop szcénában. A szövegben keveredik a luxusélet, a humor és a könnyed szórakozás, ami tipikusan Bruno x Spacc stílusát tükrözi. A klipben a srácok sajátos, vagány energiája uralja a képernyőt, igazi modern „afterparty-himnusz” lett belőle.",
+    youtube: "https://www.youtube.com/embed/EePoS6COqYs"
+  },
 ];
+
+
 
 let songs = [
-  { id: 1, artist: "Azahriah", title: "Rampapapam", year: 2023 },
-  { id: 2, artist: "Desh", title: "Ennyi volt", year: 2024 },
-  { id: 3, artist: "T. Danny", title: "Megvolt", year: 2023 },
-  { id: 4, artist: "Bruno x Spacc", title: "Táncolj!", year: 2024 },
+  { id: 1, artist: "Azahriah", title: "Rampapapam", year: 2025, nezettseg:15000000 },
+  { id: 2, artist: "Desh", title: "Mokka", year: 2025, nezettseg:29000000 },
+  { id: 3, artist: "T. Danny", title: "Pletyka", year: 2025, nezettseg:2000000 },
+  { id: 4, artist: "Bruno x Spacc", title: "Afterparty", year: 2025, nezettseg:814000 },
 ];
 
+// --- API végpontok ---
+app.get("/artists", (req, res) => res.json(artists));
+app.get("/songs", (req, res) => res.json(songs));
 
-// --- API VÉGPONTOK ---
 
-// GET /artists
-app.get("/artists", (req, res) => {
-  res.json(artists);
+app.post("/artists", upload.single("artistImage"), (req, res) => {
+  const { name, genre, info } = req.body;
+  if (!name || !genre) return res.status(400).json({ message: "Hiányzó name vagy genre" });
+
+  const imageFile = req.file ? req.file.filename : "default.jpg";
+  const newArtist = { id: artists.length + 1, name, genre, imageFile, info };
+  artists.push(newArtist);
+  res.status(201).json(newArtist);
 });
 
-// POST /artists (Képfeltöltés)
-app.post("/artists", upload.single('artistImage'), (req, res) => {
-  const { name, genre } = req.body; 
-  
-  if (!name || !genre) {
-    return res.status(400).json({ message: "Hiányzó name vagy genre" });
-  }
-  
-  const imageFile = req.file ? req.file.filename : "";
-  
-  const newArtist = { id: artists.length + 1, name, genre, imageFile: imageFile }; 
-  artists.push(newArtist);
-  res.status(201).json(newArtist);
-});
-
-// GET /songs
-app.get("/songs", (req, res) => {
-  res.json(songs);
-});
-
-// POST /songs
-app.post("/songs", (req, res) => {
-    // A logikusan összefüggő kódok a teljességhez
-    const { artist, title, year } = req.body;
-    const songYear = year || new Date().getFullYear(); 
-
-    if (!artist || !title) {
-        return res.status(400).json({ message: "Hiányzó artist vagy title" });
-    }
-    
-    const newSong = { id: songs.length + 1, artist, title, year: Number(songYear) };
-    songs.push(newSong);
-    
-    res.status(201).json(newSong);
-});
-
-
-app.listen(PORT, () => {
-  console.log(`🎧 WaveVibe API fut: http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Backend fut: http://localhost:${PORT}`));
