@@ -1,17 +1,26 @@
 {
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^5.1.0"
   },
   "name": "wavevibe-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Egy egyszerű backend szerver, amely JSON formátumban visszaadja a **WaveVibe** oldalon szereplő előadók adatait.",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TKorixx/93B8D2F1.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TKorixx/93B8D2F1/issues"
+  },
+  "homepage": "https://github.com/TKorixx/93B8D2F1#readme"
 }
